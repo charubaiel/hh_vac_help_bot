@@ -6,9 +6,9 @@ if __name__ == '__main__':
     import argparse
     prsr = argparse.ArgumentParser()
 
-    prsr.add_argument('-t','--text',default='Аналитик',help='Название вакансии')
-    prsr.add_argument('-np','--num_pages',default=5,type=int,help='Кол-во страниц сайта для парсинга')
-    prsr.add_argument('-u','--user',default='ALL',help='Юзер для кого парсятся данные')
+    prsr.add_argument('-t','--text',default='Analyst',type=str,help='Vacancy name')
+    prsr.add_argument('-np','--num_pages',default=5,type=int,help='Num pages for parsing')
+    prsr.add_argument('-u','--user',default='ALL',type=str,help='Searching user')
 
     args = prsr.parse_args()
 
