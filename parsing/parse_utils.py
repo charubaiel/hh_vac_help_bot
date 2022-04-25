@@ -6,6 +6,7 @@ import requests as r
 import numpy as np
 from tqdm import tqdm
 import logging
+import os
 
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.INFO)
@@ -13,6 +14,7 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(
 FAKE_HISTORY = ['http://google.com','http://hh.ru','https://hh.ru/search/vacancy?area=&fromSearchLine=true&text=']
 HEADERS = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36'}
 
+BOT_TOKEN = os.environ['BB_BOT_TOKEN']
 
 params = {'schedule':'',
             'area':1,
@@ -146,3 +148,30 @@ def check_doppelgangers(vacancy_list,user='ALL'):
     except:
         logging.info(f'No uniq vacancys from parse' )
         return vacancy_list
+
+
+def report_updates(chat_id,user_table):
+    today = pd.to_datetime('now').date()
+
+    conn = sqlite3.connect('../parsing/HH_vacancy.db')
+    df = pd.read_sql(f'select * from {user_table} where date = "{today}"',con=conn)
+    conn.close()
+
+    df['Exp'] = df['Exp'].str.findall('\d').apply(lambda x: min(x) if x!=[] else 0).astype(int)
+    df ['Stack'] = df['Description'].str.findall('([A-Z][A-z]{2,})').apply(lambda x: list(set(x)))
+    df['Salary'] = df['Salary'].str.replace('\xa0','').str.extract('(\d+)').astype('float')
+    df['Salary'] = df['Salary'].apply(lambda x: x*80 if x < 10000 else x)
+
+    df = df.query('Exp<3')
+    jun_data = df[df.Description.str.contains('[J|j]un') | df.Name.str.contains('[J|j]un')]
+    
+    if jun_data.shape[0]>0:
+        sorted_data = jun_data.iloc[:10].append(df.sort_values(by=['Exp','Salary'],ascending=[True,False]).head(10 - jun_data.shape[0]))
+    else:
+        sorted_data = df.sort_values(by=['Exp','Salary'],ascending=[True,False]).head(10)
+
+    upd = r.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',data={'chat_id':chat_id,
+            'text':'\n\n'.join(sorted_data.apply(lambda x:f'Name : {x["Name"]}\nCompany : {x["Company"]}\n Salary : {x["Salary"] / 1000:.0f}\nUrl : {x["url"]}\nStack : {" | ".join(x["Stack"])}' ,axis=1) )})
+
+    print(upd.status_code)
+
