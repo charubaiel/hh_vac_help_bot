@@ -7,6 +7,8 @@ import numpy as np
 from tqdm import tqdm
 import logging
 import os
+import yaml
+
 
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.INFO)
@@ -14,20 +16,15 @@ logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(
 FAKE_HISTORY = ['http://google.com','http://hh.ru','https://hh.ru/search/vacancy?area=&fromSearchLine=true&text=']
 HEADERS = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36'}
 
-BOT_TOKEN = os.environ['BB_BOT_TOKEN']
 
-params = {'schedule':'',
-            'area':1,
-            'order_by':'publication_time',
-            'employment':'full',
-            'experience':'doesNotMatter',
-            'excluded_text':'',
-            'text':'DevOps',
-            'search_field':'name',
-            'items_on_page':20,
-            'no_magic':'true',
-            'page':0,
-            'hhtmFrom':'vacancy_search_list'}
+
+
+
+with open("utils/params.yaml", 'r') as w:
+    params_all = yaml.safe_load(w)
+    params = params_all['search_params']
+    db_path = params_all['data']['db_path']
+    reporting = params_all['reporting']
 
 
 
@@ -115,8 +112,8 @@ def collect_vacancys(vacs_url_list):
     
     
 def batch_load_to_db(ttl_vac_list,user = 'ALL',query=''):
-
-    conn = sqlite3.connect('HH_vacancy.db')   
+    
+    conn = sqlite3.connect(db_path)   
 
     batch_size = 27
     batch_count = len(ttl_vac_list) // batch_size +1
@@ -139,7 +136,7 @@ def batch_load_to_db(ttl_vac_list,user = 'ALL',query=''):
 
 def check_doppelgangers(vacancy_list,user='ALL'):
     try:
-        conn = sqlite3.connect('HH_vacancy.db')
+        conn = sqlite3.connect(db_path)
         db_urls = pd.read_sql(f'select url from {user}',con=conn)['url'].tolist()
         conn.close()
         uniq = list(set(vacancy_list) - set(db_urls))
@@ -152,8 +149,8 @@ def check_doppelgangers(vacancy_list,user='ALL'):
 
 def report_updates(chat_id,user_table):
     today = pd.to_datetime('now').date()
-
-    conn = sqlite3.connect('../parsing/HH_vacancy.db')
+    BOT_TOKEN = os.environ['BB_BOT_TOKEN']
+    conn = sqlite3.connect(db_path)
     df = pd.read_sql(f'select * from {user_table} where date = "{today}"',con=conn)
     conn.close()
 
