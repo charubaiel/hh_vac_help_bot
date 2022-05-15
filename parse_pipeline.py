@@ -23,5 +23,5 @@ def hh_parse_job():
 basic_schedule = ScheduleDefinition(job=hh_parse_job, cron_schedule=reporting['schedule_time'],execution_timezone="Europe/Moscow",default_status=DefaultScheduleStatus.RUNNING)
 
 @repository
-def avito_dagster_parse():
+def hh_dagster_parse():
     return [ hh_parse_job, basic_schedule ]
