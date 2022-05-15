@@ -10,13 +10,14 @@ search_params:
   page: 0
   schedule: ''
   search_field: 'name'
-  text: 'DevOps'
   n_pages: 5
+  text: 'DevOps'
   user: 'WOWEN'  
 
 data:
   db_path: 'data/HH_vacancy.db'
-  
+   
 reporting:
   report_updates: False
   user_chat_id: ''
+  schedule_time : "28 20 * * *"

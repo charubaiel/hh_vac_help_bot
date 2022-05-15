@@ -19,7 +19,6 @@ HEADERS = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/5
 
 
 
-
 with open("utils/params.yaml", 'r') as w:
     params_all = yaml.safe_load(w)
     params = params_all['search_params']
@@ -28,13 +27,13 @@ with open("utils/params.yaml", 'r') as w:
 
 
 
-def generate_query(params):
+def generate_query(params:dict)->str:
     base_url = 'https://hh.ru/search/vacancy?'
     query_params = '&'.join([ f'{i}={params[i]}' for i in params])
     return base_url+query_params
 
 
-def parse_vacancy_pages(page):
+def parse_vacancy_pages(page)->list:
     soup = BeautifulSoup(page.text,'lxml')
     vacancys = []
     for i in soup.findAll('a',{'data-qa':'vacancy-serp__vacancy-title'}):
@@ -43,7 +42,7 @@ def parse_vacancy_pages(page):
     return vacancys
 
 
-def get_hh_pages(params,n_pages=5):
+def get_hh_pages(params:dict,n_pages=5)->list:
     pages = []
     with r.Session() as s:
 
@@ -66,7 +65,7 @@ def get_hh_pages(params,n_pages=5):
 
 
 
-def parse_vaс(response):
+def parse_vaс(response)->dict:
     assert response.status_code == 200
     vac_soup = BeautifulSoup(response.text,'lxml')
     vac_dict = {}
@@ -91,7 +90,7 @@ def parse_vaс(response):
 
 
 
-def collect_vacancys(vacs_url_list):
+def collect_vacancys(vacs_url_list:list)->pd.DataFrame:
     
     vac_data_list = []
     with r.Session() as ses:
@@ -111,7 +110,7 @@ def collect_vacancys(vacs_url_list):
     return pd.DataFrame(vac_data_list).assign(url = vacs_url_list,date = pd.to_datetime('now').date())
     
     
-def batch_load_to_db(ttl_vac_list,user = 'ALL',query=''):
+def batch_load_to_db(ttl_vac_list:list,user = 'ALL',query=''):
     
     conn = sqlite3.connect(db_path)   
 
@@ -134,7 +133,7 @@ def batch_load_to_db(ttl_vac_list,user = 'ALL',query=''):
 
 
 
-def check_doppelgangers(vacancy_list,user='ALL'):
+def check_doppelgangers(vacancy_list:list,user='ALL')->list:
     try:
         conn = sqlite3.connect(db_path)
         db_urls = pd.read_sql(f'select url from {user}',con=conn)['url'].tolist()
