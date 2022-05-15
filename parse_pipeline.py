@@ -2,10 +2,12 @@
 from utils.parse_utils import *
 from dagster import ScheduleDefinition, DefaultScheduleStatus, job, op, repository
 
+with open('utils/dagster_params.yaml') as w:
+    config = yaml.safe_load(w)
     
 @op
-def parse_pages()->list:
-    return get_hh_pages(params,n_pages=params['n_pages'])
+def parse_pages(context)->list:
+    return get_hh_pages(context.op_config['search_params'])
 
 @op
 def check_duplicates(vacancy_list:list)->list:
@@ -16,7 +18,7 @@ def load_data(uniq_vacancy_list:list):
     return batch_load_to_db(uniq_vacancy_list,params['user'],query=params['text'])
 
 
-@job
+@job(config= config) 
 def hh_parse_job():
     load_data(check_duplicates(parse_pages()))
 

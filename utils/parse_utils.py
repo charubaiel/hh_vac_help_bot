@@ -42,14 +42,14 @@ def parse_vacancy_pages(page)->list:
     return vacancys
 
 
-def get_hh_pages(params:dict,n_pages=5)->list:
+def get_hh_pages(params:dict)->list:
     pages = []
     with r.Session() as s:
 
         s.headers.update(HEADERS)
         [s.get(i) for i in FAKE_HISTORY];
 
-        for _ in tqdm(range(n_pages)):
+        for _ in tqdm(range(params['n_pages'])):
 
             time.sleep(np.random.poisson(5))
 
