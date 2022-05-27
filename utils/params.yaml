@@ -1,23 +1,28 @@
-search_params:
-  area: 1
-  employment: 'full'
-  excluded_text: ''
-  experience: 'doesNotMatter'
-  hhtmFrom: 'vacancy_search_list'
-  items_on_page: 20
-  no_magic: 'true'
-  order_by: 'publication_time'
-  page: 0
-  schedule: ''
-  search_field: 'name'
-  n_pages: 5
-  text: 'DevOps'
-  user: 'WOWEN'  
-
-data:
-  db_path: 'data/HH_vacancy.db'
-   
-reporting:
-  report_updates: False
-  user_chat_id: ''
-  schedule_time : "28 20 * * *"
+ops:
+  parse_pages:
+    config:
+      search_params:
+        area: 1
+        employment: full
+        excluded_text: ""
+        experience: doesNotMatter
+        hhtmFrom: vacancy_search_list
+        items_on_page: 20
+        n_pages: 3 # Кол-во страниц для парсинга
+        no_magic: "true"
+        order_by: publication_time
+        page: 0
+        schedule: ""
+        search_field: name # то в каких местах искать название
+        text: "DevOps" # название поискового запроса в хх
+  load_data:
+    config:
+      user: "WOWEN" # название таблички для сохранения данных по вакансии
+      db_path: 'data/HH_vacancy.db'
+  report:
+    config:
+      report_updates: False # Отправлять ли репорт по новым вакансиям
+      user_chat_id: '-1001620673955' # тг чат для отправки
+      bot_token: '' # токен вашего бота который будет слать вам данные
+      schedule_time : "28 20 */3 * *" # расписание для парсинга
+        

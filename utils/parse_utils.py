@@ -17,14 +17,10 @@ FAKE_HISTORY = ['http://google.com','http://hh.ru','https://hh.ru/search/vacancy
 HEADERS = {'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.88 Safari/537.36'}
 
 
-
-
-with open("utils/params.yaml", 'r') as w:
-    params_all = yaml.safe_load(w)
-    params = params_all['search_params']
-    db_path = params_all['data']['db_path']
-    reporting = params_all['reporting']
-
+with open('utils/params.yaml') as w:
+    config = yaml.safe_load(w)
+    params = config['ops']['parse_pages']['config']['search_params']
+    DB_PATH = config['ops']['load_data']['config']['db_path']
 
 
 def generate_query(params:dict)->str:
@@ -110,7 +106,7 @@ def collect_vacancys(vacs_url_list:list)->pd.DataFrame:
     return pd.DataFrame(vac_data_list).assign(url = vacs_url_list,date = pd.to_datetime('now').date())
     
     
-def batch_load_to_db(ttl_vac_list:list,user = 'ALL',query=''):
+def batch_load_to_db(ttl_vac_list:list,db_path = DB_PATH, user = 'ALL',query=''):
     
     conn = sqlite3.connect(db_path)   
 
@@ -133,7 +129,7 @@ def batch_load_to_db(ttl_vac_list:list,user = 'ALL',query=''):
 
 
 
-def check_doppelgangers(vacancy_list:list,user='ALL')->list:
+def check_doppelgangers(vacancy_list:list,db_path = DB_PATH,user='ALL')->list:
     try:
         conn = sqlite3.connect(db_path)
         db_urls = pd.read_sql(f'select url from {user}',con=conn)['url'].tolist()
@@ -146,9 +142,8 @@ def check_doppelgangers(vacancy_list:list,user='ALL')->list:
         return vacancy_list
 
 
-def report_updates(chat_id,user_table):
+def report_updates(chat_id,user_table,db_path=DB_PATH,bot_token = None):
     today = pd.to_datetime('now').date()
-    BOT_TOKEN = os.environ['BB_BOT_TOKEN']
     conn = sqlite3.connect(db_path)
     df = pd.read_sql(f'select * from {user_table} where date = "{today}"',con=conn)
     conn.close()
@@ -175,7 +170,7 @@ def report_updates(chat_id,user_table):
                                                                         '''
                                                                     ,axis=1))
 
-    upd = r.post(f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage',data={'chat_id':chat_id,
+    upd = r.post(f'https://api.telegram.org/bot{bot_token}/sendMessage',data={'chat_id':chat_id,
             'text':f'''`{txt}`''',
             'parse_mode':'MarkdownV2'})
     print(upd.text)

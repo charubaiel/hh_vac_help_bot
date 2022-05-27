@@ -1,34 +1,53 @@
 
 from utils.parse_utils import *
-from dagster import ScheduleDefinition, DefaultScheduleStatus, job, op, repository
+from dagster import DefaultScheduleStatus, job, op, repository, schedule
 
-with open('utils/dagster_params.yaml') as w:
-    config = yaml.safe_load(w)
     
-@op(config_schema={'search_params':dict})
-def parse_pages(context)->list:
-    return get_hh_pages(context.op_config['search_params'])
-
-@op(config_schema={'user':str})
-def check_duplicates(context,vacancy_list:list)->list:
-    return check_doppelgangers(vacancy_list,context.op_config['search_params']['user'])
-
-@op(config_schema={'search_params':dict})
-def load_data(context,uniq_vacancy_list:list):
-    return batch_load_to_db(uniq_vacancy_list,context.op_config['search_params']['user'],
-                            query=context.op_config['search_params']['text'])
+@op(description='download hh data')
+def parse_pages(context)->dict:
+    return {'vacancy_list':get_hh_pages(context.op_config['search_params']),
+            'vacancy_name':context.op_config['search_params']['text']}
 
 
-# @job(config= config) 
-@job
+
+@op(description='check duplicates and load to local db')
+def load_data(context,vacancy_info:dict)->None:
+
+    uniq_vacancy_list = check_doppelgangers(vacancy_info['vacancy_list'],
+                                            user = context.op_config['user'])
+    context.log.info(f'Got {len(uniq_vacancy_list)} uniq vacancys from parse')
+    if len(uniq_vacancy_list)>0:  
+
+        batch_load_to_db(uniq_vacancy_list,
+                        user = context.op_config['user'],
+                        query = vacancy_info['vacancy_name'])
+
+    return context.op_config['user']
+
+
+
+@op(description='report updates in tg channel')
+def report(context,user:str)->None:
+    if context.op_config['report_updates']:
+        report_updates(chat_id = context.op_config['user_chat_id'],
+                        user_table = user,
+                        bot_token=context.op_config['bot_token'])
+    context.log.info('Done')
+
+
+
+@job(config = config) 
 def hh_parse_job():
-    load_data(check_duplicates(parse_pages()))
+    report(load_data(parse_pages()))
 
-basic_schedule = ScheduleDefinition(job=hh_parse_job,
-                                    cron_schedule=reporting['schedule_time'],
-                                    execution_timezone="Europe/Moscow",
-                                    default_status=DefaultScheduleStatus.RUNNING)
+@schedule(job=hh_parse_job,
+            cron_schedule=config['ops']['report']['config']['schedule_time'],
+            execution_timezone="Europe/Moscow",
+            default_status=DefaultScheduleStatus.RUNNING)
+def hh_parse_schedule(context):
+    return {}
+
 
 @repository
 def hh_dagster_parse():
-    return [ hh_parse_job, basic_schedule ]
+    return [ hh_parse_job, hh_parse_schedule ]
