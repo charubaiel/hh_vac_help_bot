@@ -1,9 +1,0 @@
-bs4
-pandas
-requests
-numpy
-tqdm
-PyYAML
-lxml
-dagster
-dagit

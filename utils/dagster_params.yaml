@@ -1,26 +1,30 @@
 ops:
-  parse_pages:  
+  check_duplicates:
+    config:
+      user: "WOWEN"
+  parse_pages:
     config:
       search_params:
         area: 1
-        employment: 'full'
-        excluded_text: ''
-        experience: 'doesNotMatter'
-        hhtmFrom: 'vacancy_search_list'
+        employment: full
+        excluded_text: ""
+        experience: doesNotMatter
+        hhtmFrom: vacancy_search_list
         items_on_page: 20
-        no_magic: 'true'
-        order_by: 'publication_time'
-        page: 0
-        schedule: ''
-        search_field: 'name'
         n_pages: 5
-        text: 'DevOps'
-        user: 'WOWEN'  
+        no_magic: "true"
+        order_by: publication_time
+        page: 0
+        schedule: ""
+        search_field: name
+        text: "DevOps"
+        user: "WOWEN"
+ 
 
       data:
         db_path: 'data/HH_vacancy.db'
         
       reporting:
-        report_updates: False
-        user_chat_id: ''
+        report_updates: True
+        user_chat_id: '-1001620673955'
         schedule_time : "28 20 * * *"

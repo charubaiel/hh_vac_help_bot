@@ -3,7 +3,7 @@ from utils.parse_utils import *
 
 if __name__ == '__main__':
 
-    vacancy_list = get_hh_pages(params,n_pages=params['n_pages'])
+    vacancy_list = get_hh_pages(params)
 
     uniq_vacancy_list = check_doppelgangers(vacancy_list,params['user'])
 

@@ -5,21 +5,22 @@ from dagster import ScheduleDefinition, DefaultScheduleStatus, job, op, reposito
 with open('utils/dagster_params.yaml') as w:
     config = yaml.safe_load(w)
     
-@op
+@op(config_schema={'search_params':dict})
 def parse_pages(context)->list:
     return get_hh_pages(context.op_config['search_params'])
 
-@op
+@op(config_schema={'user':str})
 def check_duplicates(context,vacancy_list:list)->list:
     return check_doppelgangers(vacancy_list,context.op_config['search_params']['user'])
 
-@op
+@op(config_schema={'search_params':dict})
 def load_data(context,uniq_vacancy_list:list):
     return batch_load_to_db(uniq_vacancy_list,context.op_config['search_params']['user'],
                             query=context.op_config['search_params']['text'])
 
 
-@job(config= config) 
+# @job(config= config) 
+@job
 def hh_parse_job():
     load_data(check_duplicates(parse_pages()))
 
